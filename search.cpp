@@ -23,6 +23,13 @@ vector<vector<int>> goal;
 
 
 
+
+
+
+
+
+
+
 //the struct that will be used to represent each state/node
 struct Node{ 
     //this 2d array will be used to store the state
@@ -36,11 +43,16 @@ struct Node{
     //f(n) = h(n) + g(n)
     int f;   
 
+    //the search function used
+    int searchFunction; 
+
     //this will be used for the first node in the queue
-    Node(vector<vector<int>> userPuzzle, int searchMethod){
+    Node(vector<vector<int>> &userPuzzle, int searchMethod){
         state = userPuzzle; 
 
         goal = state; 
+
+        searchFunction = searchMethod; 
 
         //create indexMap to be used by manhattan function
         //create goal state 
@@ -81,6 +93,29 @@ struct Node{
         f = g + h; 
     }
 
+
+    Node(Node* parentNode, vector<vector<int>> &childState){
+        
+        this->state = childState;
+
+        this->searchFunction = parentNode->searchFunction; 
+        //the depth increases by one
+        this->g = parentNode->g + 1; 
+        if(searchFunction == 0){
+            this->h = 0; 
+        }
+        else if(searchFunction == 1){
+            this->h = MisplacedTiles(this); 
+        }
+        else{
+            this->h = ManhattanDistance(this); 
+        }
+
+
+        this->f = this->h + this->g; 
+
+    }
+
     void PrintNode(){
 
         cout << endl << "The best state to expand with a g(n) = " << this->g << " and h(n) = " << this->h << " is..." << endl; 
@@ -97,7 +132,8 @@ struct Node{
     }
 }; 
 
-//used in a map to store indices of tiles for quick look up during manhattan heuristic calculation 
+
+
 
 
 
@@ -109,6 +145,10 @@ struct CompareNodes{
         return (puzzleA->f > puzzleB->f);
     }
 };
+
+
+
+
 
 
 //structure to define the min heap used
@@ -177,9 +217,6 @@ class MinHeap{
         return; 
     }
 
-
-
-
     //function to remove and return the front node
     Node* RemoveFront(){
         
@@ -204,20 +241,75 @@ class MinHeap{
         }
     }
 
-
-
 };
 
+//swap function returns a state after tiles have been swapped
+vector<vector<int>> swapTiles(vector<vector<int>>& parentState, int blankI, int blankJ, int tileI, int tileJ){
+    
+    vector<vector<int>> tempVector = parentState;
+
+    //swap..
+    tempVector.at(blankI).at(blankJ) = tempVector.at(tileI).at(tileJ); 
+    tempVector.at(tileI).at(tileJ) = 0; 
+
+    return tempVector;  
+}
+
 //Function to expand a node and returns a vector of nodes to be queued
-vector<Node*> Expand(Node* currNode){
+vector<Node*> Expand(Node* parentNode){
     //will store the vector of expanded nodes
-    vector<Node*> temp;
+    vector<Node*> expandNodes;
+    vector<vector<int>> tempState; 
 
     //stores the state of the current node that must be expanded
-    vector<vector<int>> currState = currNode->state; 
+    vector<vector<int>> parentState = parentNode->state; 
 
-    //TODO: find the blank tile(i.e. value is 0)
+    //find the blank tile(i.e. value is 0)
+    int i, j, x, y;   
+
+    for(i = 0; i < parentState.size(); ++i){
+        for(j = 0; j < parentState.at(i).size(); ++j){
+            if(parentState.at(i).at(j) == 0){
+                x = i; 
+                y = j; 
+            }
+        }
+    }
+
+    //determine in which direction the blank can go and create nodes respectively
+    //if 0 can be swapped up
+    if(x > 0){
+        //create a new state after the swap 
+        tempState = swapTiles(parentState, x, y, x - 1, y); 
+        Node* upSwap = new Node(parentNode, tempState); 
+        //push the node to the expandNodes vector
+        expandNodes.push_back(upSwap); 
+    }
+    //if 0 can be swapped down
+    if(x < parentState.size() - 1){
+        //create new state after swap
+        tempState = swapTiles(parentState, x, y, x + 1, y); 
+        Node* downSwap = new Node(parentNode, tempState);
+        expandNodes.push_back(downSwap);
+    }
+    //if 0 can be swapped to the left
+    if(y > 0){
+        tempState = swapTiles(parentState, x, y, x, y - 1);
+        Node* leftSwap = new Node(parentNode, tempState);
+        expandNodes.push_back(leftSwap);
+    }
+    //if 0 can be swapped to the right
+    if(y < parentState.at(0).size() - 1){
+        tempState = swapTiles(parentState, x, y, x, y + 1); 
+        Node* rightSwap = new Node(parentNode, tempState); 
+        expandNodes.push_back(rightSwap); 
+    }
+
+    //return vector of expanded nodes
+    return expandNodes; 
 }
+
+
 
 
 //TODO: Function for the general purpose search algorithm
@@ -227,7 +319,7 @@ vector<Node*> Expand(Node* currNode){
 
 
 
-//TODO: Function to generate A* misplaced tiles heuristic
+// Function to generate A* misplaced tiles heuristic
 //count the number of misplaced tiles
 //at any index [i,j] in the 2d vector, the value should = 3i + j + 1. If not, add 1 to the heurestic 
 int MisplacedTiles(Node* currNode){
@@ -249,7 +341,7 @@ int MisplacedTiles(Node* currNode){
 }
 
 
-//TODO: Function to generate Manhattan heuristic
+//Function to generate Manhattan heuristic
 int ManhattanDistance(Node* currNode){
     
     vector<vector<int>> tempState = currNode->state; 
@@ -290,11 +382,6 @@ int ManhattanDistance(Node* currNode){
 
 
 
-//TODO: function to calculate f
-
-
-
-
 
 
 //driver code
@@ -318,8 +405,8 @@ int main(){
     
     
     matrix.push_back({2,1,3});
-    matrix.push_back({5,4,6});
-    matrix.push_back({7,0,8});
+    matrix.push_back({5,0,6});
+    matrix.push_back({7,4,8});
 
     MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
     
@@ -328,25 +415,37 @@ int main(){
     // myHeap->pushNode(node2); 
     // myHeap->pushNode(node3); 
 
-    while(!myHeap->Empty()){
-        myHeap->RemoveFront()->PrintNode(); 
-    }
+    // while(!myHeap->Empty()){
+    //     myHeap->RemoveFront()->PrintNode(); 
+    // }
 
     // cout << "The goal state is: " << endl; 
 
-    // for(auto i: goal){
-    //     for(auto j: i){
-    //         cout << j << " ";
-    //     }
-    //     cout << endl; 
-    // }
+
 
     // cout << "the map is as follows" << endl; 
     
   
-    cout << endl << myHeap->GetMaxNodes() << " " << myHeap->GetTotalNodes() << endl; 
+    // cout << endl << myHeap->GetMaxNodes() << " " << myHeap->GetTotalNodes() << endl; 
+
+    for(auto i: matrix){
+        for(auto j: i){
+            cout << j << " ";
+        }
+        cout << endl; 
+    }
+
+    Node* node1 = new Node(matrix, 2); 
+
+    vector<Node*> children = Expand(node1); 
+
+    for(auto i: children){
+        i->PrintNode(); 
+    }
 
 
+
+    
 
     delete myHeap;
 
