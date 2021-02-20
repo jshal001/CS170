@@ -192,6 +192,14 @@ class MinHeap{
         return goalState; 
     }
 
+    //Queueing function 
+    void QueueingFunction(vector<Node*> children){
+        //queue each node with the helper pushNode function 
+        for(int i = 0; i < children.size(); ++i){
+            pushNode(children.at(i)); 
+        }
+    }
+
     //function to push a new node to the heap
     void pushNode(Node* currNode){
         //first check if the node has already been visited, if so return
@@ -311,14 +319,6 @@ vector<Node*> Expand(Node* parentNode){
 
 
 
-
-//TODO: Function for the general purpose search algorithm
-
-
-
-
-
-
 // Function to generate A* misplaced tiles heuristic
 //count the number of misplaced tiles
 //at any index [i,j] in the 2d vector, the value should = 3i + j + 1. If not, add 1 to the heurestic 
@@ -378,9 +378,37 @@ int ManhattanDistance(Node* currNode){
 
 
 //Function to check if the current node is a goal state
+bool GoalTest(vector<vector<int>>& testState){
+    return testState == goal; 
+}
 
 
+//Function for the general purpose search algorithm
+//Passes in initial state and the search method desired
+Node* GeneralSearch(vector<vector<int>>& initialState, int searchMethod){
+    // cout << "0" << endl; 
 
+    MinHeap* myHeap = new MinHeap(new Node(initialState, searchMethod));
+
+    // cout << "1" << endl; 
+    while(!myHeap->Empty()){
+        // cout << "2" << endl; 
+        Node* node = myHeap->RemoveFront(); 
+        // cout << "3" << endl; 
+        if(GoalTest(node->state)){
+            // cout << "4" << endl; 
+            return node; 
+        }
+        // cout << "5" << endl; 
+        myHeap->QueueingFunction(Expand(node)); 
+        // cout << "6" << endl; 
+    }
+
+    //if it exits the while loop then the queue is empty
+    //return failure
+    return nullptr; 
+
+}
 
 
 
@@ -404,20 +432,23 @@ int main(){
 
     
     
-    matrix.push_back({2,1,3});
-    matrix.push_back({5,0,6});
-    matrix.push_back({7,4,8});
+    matrix.push_back({7,1,2});
+    matrix.push_back({4,8,5});
+    matrix.push_back({6,3,0});
 
-    MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
+    GeneralSearch(matrix, 1)->PrintNode(); 
+
+
+    // MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
+    // MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
+
     
 
      
     // myHeap->pushNode(node2); 
     // myHeap->pushNode(node3); 
 
-    // while(!myHeap->Empty()){
-    //     myHeap->RemoveFront()->PrintNode(); 
-    // }
+
 
     // cout << "The goal state is: " << endl; 
 
@@ -428,26 +459,22 @@ int main(){
   
     // cout << endl << myHeap->GetMaxNodes() << " " << myHeap->GetTotalNodes() << endl; 
 
-    for(auto i: matrix){
-        for(auto j: i){
-            cout << j << " ";
-        }
-        cout << endl; 
-    }
+    // for(auto i: matrix){
+    //     for(auto j: i){
+    //         cout << j << " ";
+    //     }
+    //     cout << endl; 
+    // }
 
-    Node* node1 = new Node(matrix, 2); 
+    // myHeap->QueueingFunction(Expand(myHeap->RemoveFront())); 
+    // myHeap->QueueingFunction(Expand(myHeap->RemoveFront())); 
 
-    vector<Node*> children = Expand(node1); 
-
-    for(auto i: children){
-        i->PrintNode(); 
-    }
-
+    // while(!myHeap->Empty()){
+    //     myHeap->RemoveFront()->PrintNode(); 
+    // }
 
 
-    
 
-    delete myHeap;
 
 
 
