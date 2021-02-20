@@ -2,13 +2,25 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <cmath>
 
 using namespace std; 
 
+struct IndexPair{
+    int x; 
+    int y; 
+
+    IndexPair(int x, int y): x(x), y(y){}
+}; 
 struct Node; 
 class MinHeap; 
 int MisplacedTiles(Node*); 
-vector<vector<int>> ManhattanDistance(Node*); 
+int ManhattanDistance(Node*); 
+
+map<int, IndexPair*> indexMap; 
+
+vector<vector<int>> goal; 
+
 
 
 //the struct that will be used to represent each state/node
@@ -24,8 +36,28 @@ struct Node{
     //f(n) = h(n) + g(n)
     int f;   
 
+    //this will be used for the first node in the queue
     Node(vector<vector<int>> userPuzzle, int searchMethod){
         state = userPuzzle; 
+
+        goal = state; 
+
+        //create indexMap to be used by manhattan function
+        //create goal state 
+        int i, j; 
+        for(i = 0; i < goal.size(); ++i){
+            for(j = 0; j < goal.at(i).size(); ++j){
+                //assign the correct value to each pair
+                goal.at(i).at(j)= ((3*i) + j + 1);
+                //populate the map
+                indexMap.emplace(((3*i) + j + 1), new IndexPair(i,j)); 
+            }
+        }
+        //Assign the zero at the end 
+        goal.at(i - 1).at(j - 1) = 0;
+
+        //Remove the extra 9 key from map
+        indexMap.erase(9);
         
         //depending on the passed in search method, generate the heuristic 
         //Uniform Cost
@@ -39,7 +71,8 @@ struct Node{
         }
         //Manhattan Distance
         else{
-            h = 0; 
+            cout << "this ------------" << endl; 
+            h = ManhattanDistance(this); 
         }
 
         //Since this constructor is for the root node, g will be 0
@@ -63,6 +96,9 @@ struct Node{
 
     }
 }; 
+
+//used in a map to store indices of tiles for quick look up during manhattan heuristic calculation 
+
 
 
 //Struct to use as the deciding comparison between two nodes
@@ -91,16 +127,29 @@ class MinHeap{
     //max number of nodes in queue at one time
     int maxNodes; 
 
+    //stores goal state of the puzzle passed in 
+    vector<vector<int>> goalState; 
+
+    //A map with tile values as keys and the [i,j] pair that should correspond to each tile
+    //useful for quick lookup when calculating manhattan heuristic 
+
     public: 
 
-    MinHeap(): numNodes(0), maxNodes(0){}
+    MinHeap(Node* rootNode): numNodes(1), maxNodes(1){
+        //push the node to the heap
+        minHeap.push(rootNode); 
+    }
 
-    int GetTotalNodes(){
+    const int GetTotalNodes(){
         return numNodes; 
     }
 
-    int GetMaxNodes(){
+    const int GetMaxNodes(){
         return maxNodes; 
+    }
+
+    const vector<vector<int>>& getGoalState(){
+        return goalState; 
     }
 
     //function to push a new node to the heap
@@ -144,6 +193,15 @@ class MinHeap{
     //a check to see if the queue is empty
     bool Empty(){
         return minHeap.empty(); 
+    }
+
+    //destructor to deallocate all nodes in the heap
+    ~MinHeap(){
+        while(!minHeap.empty()){
+            Node* currNode = minHeap.top();
+            minHeap.pop(); 
+            delete currNode; 
+        }
     }
 
 
@@ -191,25 +249,37 @@ int MisplacedTiles(Node* currNode){
 }
 
 
-//TODO: Function to generate node Manhattan heuristic
-vector<vector<int>> ManhattanDistance(Node* currNode){
-    //construct the goal state
-    vector<vector<int>> goalState = currNode->state;
+//TODO: Function to generate Manhattan heuristic
+int ManhattanDistance(Node* currNode){
+    
+    vector<vector<int>> tempState = currNode->state; 
 
+    //used to calculate distance of each value from it's correct position 
+    int deltaX = 0; 
+    int deltaY = 0; 
 
-    int i, j; 
-
-    for(i = 0; i < goalState.size(); ++i){
-        for(j = 0; j < goalState.at(i).size(); ++j){
-            //assign the correct value to each pair
-            goalState.at(i).at(j)= ((3*i) + j + 1);
+    int hValue = 0;   
+    //loop through every value at each index pair of current node's state, and compare to the index pair at the value 
+    //in the indexMap derived from the goal state
+    for(int i = 0; i < tempState.size(); ++i){
+        for(int j = 0; j < tempState.at(i).size(); ++j){
+            //if the value at this position is 0 do nothing
+            if(tempState.at(i).at(j) == 0){
+                //nothing
+            }
+            else{
+                
+                deltaX = abs(indexMap[tempState.at(i).at(j)]->x - i); 
+                deltaY = abs(indexMap[tempState.at(i).at(j)]->y - j); 
+               
+                //add the sum of deltaX and delta
+                hValue+= deltaX + deltaY; 
+            }
         }
     }
-    //Assign the zero at the end 
-    goalState.at(i - 1).at(j - 1) = 0;
 
 
-    return goalState; 
+    return hValue; 
 }
 
 
@@ -243,30 +313,40 @@ int main(){
     // else{
     //     //have the user enter their puzzle
     // }
-    MinHeap* myHeap = new MinHeap(); 
     vector<vector<int>> matrix;
 
     
     
-    matrix.push_back({1,3,2});
-    matrix.push_back({4,6,5});
-    matrix.push_back({7,8,0});
+    matrix.push_back({2,1,3});
+    matrix.push_back({5,4,6});
+    matrix.push_back({7,0,8});
 
-    Node* node1 = new Node(matrix, 2);
+    MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
     
 
-    myHeap->pushNode(node1); 
+     
     // myHeap->pushNode(node2); 
     // myHeap->pushNode(node3); 
 
-    // while(!myHeap->Empty()){
-    //     myHeap->RemoveFront()->PrintNode(); 
+    while(!myHeap->Empty()){
+        myHeap->RemoveFront()->PrintNode(); 
+    }
+
+    // cout << "The goal state is: " << endl; 
+
+    // for(auto i: goal){
+    //     for(auto j: i){
+    //         cout << j << " ";
+    //     }
+    //     cout << endl; 
     // }
+
+    // cout << "the map is as follows" << endl; 
     
-    // cout << endl << myHeap->GetMaxNodes() << " " << myHeap->GetTotalNodes() << endl; 
+  
+    cout << endl << myHeap->GetMaxNodes() << " " << myHeap->GetTotalNodes() << endl; 
 
 
-    delete node1; 
 
     delete myHeap;
 
