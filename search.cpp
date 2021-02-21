@@ -412,8 +412,7 @@ Node* GeneralSearch(vector<vector<int>>& initialState, int searchMethod){
         //for printing as you go
         node->PrintNode(); 
         stateQueue->QueueingFunction(Expand(node));
-        //deallocate the node
-        // delete node;  
+      
     }
 
     //if it exits the while loop then the queue is empty
@@ -485,13 +484,7 @@ int main(){
 
     cin >> searchAlgo; 
 
-    // for(auto i: initialState){
-    //     for(auto j: i){
-    //         cout << j << " "; 
-    //     }
-    //     cout << endl; 
-    // }
-
+  
     GeneralSearch(initialState, searchAlgo); 
 
 
