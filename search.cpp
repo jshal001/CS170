@@ -3,9 +3,12 @@
 #include <queue>
 #include <map>
 #include <cmath>
+#include <string>
+#include <sstream>
 
 using namespace std; 
 
+//useful for mapping state values to their correct positions
 struct IndexPair{
     int x; 
     int y; 
@@ -83,7 +86,6 @@ struct Node{
         }
         //Manhattan Distance
         else{
-            cout << "this ------------" << endl; 
             h = ManhattanDistance(this); 
         }
 
@@ -101,10 +103,10 @@ struct Node{
         this->searchFunction = parentNode->searchFunction; 
         //the depth increases by one
         this->g = parentNode->g + 1; 
-        if(searchFunction == 0){
+        if(searchFunction == 1){
             this->h = 0; 
         }
-        else if(searchFunction == 1){
+        else if(searchFunction == 2){
             this->h = MisplacedTiles(this); 
         }
         else{
@@ -175,7 +177,7 @@ class MinHeap{
 
     public: 
 
-    MinHeap(Node* rootNode): numNodes(1), maxNodes(1){
+    MinHeap(Node* rootNode): numNodes(0), maxNodes(1){
         //push the node to the heap
         minHeap.push(rootNode); 
     }
@@ -246,6 +248,10 @@ class MinHeap{
             Node* currNode = minHeap.top();
             minHeap.pop(); 
             delete currNode; 
+        }
+
+        for(auto i: visitedNodes){
+            delete i; 
         }
     }
 
@@ -388,20 +394,26 @@ bool GoalTest(vector<vector<int>>& testState){
 Node* GeneralSearch(vector<vector<int>>& initialState, int searchMethod){
     // cout << "0" << endl; 
 
-    MinHeap* myHeap = new MinHeap(new Node(initialState, searchMethod));
+    MinHeap* stateQueue = new MinHeap(new Node(initialState, searchMethod));
 
-    // cout << "1" << endl; 
-    while(!myHeap->Empty()){
-        // cout << "2" << endl; 
-        Node* node = myHeap->RemoveFront(); 
-        // cout << "3" << endl; 
+    while(!stateQueue->Empty()){
+        Node* node = stateQueue->RemoveFront(); 
+
         if(GoalTest(node->state)){
-            // cout << "4" << endl; 
+            cout << endl << "Goal!!" << endl; 
+            cout << "Solution depth: " << node->g << endl; 
+            cout << "Number of nodes expanded: " << stateQueue->GetTotalNodes() << endl; 
+            cout << "Max queue size: " << stateQueue->GetMaxNodes() << endl; 
+
             return node; 
+            
         }
-        // cout << "5" << endl; 
-        myHeap->QueueingFunction(Expand(node)); 
-        // cout << "6" << endl; 
+        
+        //for printing as you go
+        node->PrintNode(); 
+        stateQueue->QueueingFunction(Expand(node));
+        //deallocate the node
+        // delete node;  
     }
 
     //if it exits the while loop then the queue is empty
@@ -415,64 +427,72 @@ Node* GeneralSearch(vector<vector<int>>& initialState, int searchMethod){
 //driver code
 int main(){
     
-    // int puzzleChoice = 1; 
-    // int currNum = 0; 
+    int puzzleChoice = 1; 
+    int tempValue = 0; 
+    vector<int> tempVector; 
+    vector<vector<int>> initialState;
+    int searchAlgo = 1; 
+    string inputVec; 
     
-    // cout << "Welcome to Bertie Woosters 8-puzzle solver." << endl; 
-    // cout << "Type \"1\" to use a default puzzle, or \"2\" to enter your own puzzle." << endl; 
-    // cin >> puzzleChoice;
-
-    // if(puzzleChoice == 1){
-    //     //default puzzle is chosen
-    // }
-    // else{
-    //     //have the user enter their puzzle
-    // }
-    vector<vector<int>> matrix;
-
+    cout << "Welcome to Bertie Woosters 8-puzzle solver." << endl; 
+    cout << "Type \"1\" to use a default puzzle, or \"2\" to enter your own puzzle." << endl; 
+    cin >> puzzleChoice;
+    if(puzzleChoice == 1){    
     
-    
-    matrix.push_back({7,1,2});
-    matrix.push_back({4,8,5});
-    matrix.push_back({6,3,0});
+        initialState.push_back({1,2,3});
+        initialState.push_back({4,5,6});
+        initialState.push_back({0,7,8});
 
-    GeneralSearch(matrix, 1)->PrintNode(); 
+    }
+    else{    
+        cout << "Enter the first row separated by spaces(ex: 1 2 3):" << endl;
 
+        cin.ignore(1000, '\n'); 
+        
+        getline(cin, inputVec);
+        istringstream iss1(inputVec);
+        while(iss1 >> tempValue){
+            tempVector.push_back(tempValue); 
+        }
 
-    // MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
-    // MinHeap* myHeap = new MinHeap(new Node(matrix, 3));
+        initialState.push_back(tempVector); 
 
-    
+        tempVector.clear(); 
 
-     
-    // myHeap->pushNode(node2); 
-    // myHeap->pushNode(node3); 
+        cout << "Enter the second row separated by spaces(ex: 1 2 3):" << endl;
+        
+        getline(cin, inputVec);
+        istringstream iss2(inputVec);
+        while(iss2 >> tempValue){
+            tempVector.push_back(tempValue); 
+        }        
+        initialState.push_back(tempVector);  
+        tempVector.clear();        
 
+        cout << "Enter the third row separated by spaces(ex: 1 2 3):" << endl;
 
+        getline(cin, inputVec);
+        istringstream iss3(inputVec);
+        while(iss3 >> tempValue){
+            tempVector.push_back(tempValue); 
+        }
 
-    // cout << "The goal state is: " << endl; 
+        initialState.push_back(tempVector);
+        tempVector.clear();  
+    }
+    cout << "Select algorithm. (1) for Uniform Cost Search, (2), for the Misplaced Tile" << endl
+         << "Heuristic, or (3) for Manhattan Distance Heuristic." << endl; 
 
+    cin >> searchAlgo; 
 
-
-    // cout << "the map is as follows" << endl; 
-    
-  
-    // cout << endl << myHeap->GetMaxNodes() << " " << myHeap->GetTotalNodes() << endl; 
-
-    // for(auto i: matrix){
+    // for(auto i: initialState){
     //     for(auto j: i){
-    //         cout << j << " ";
+    //         cout << j << " "; 
     //     }
     //     cout << endl; 
     // }
 
-    // myHeap->QueueingFunction(Expand(myHeap->RemoveFront())); 
-    // myHeap->QueueingFunction(Expand(myHeap->RemoveFront())); 
-
-    // while(!myHeap->Empty()){
-    //     myHeap->RemoveFront()->PrintNode(); 
-    // }
-
+    GeneralSearch(initialState, searchAlgo); 
 
 
 
