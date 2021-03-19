@@ -22,8 +22,18 @@ bool isEmpty(vector<int> &features, int k){
     
 }
 
-//search function to find the most accurate feature set to use
-void FeatureSearch(vector<vector<double>> &data){
+//helper function to find index of given value 
+int GetIndex(vector<int>& features, int val){
+    vector<int>::iterator it = find(features.begin(), features.end(), val); 
+
+    
+    return distance(features.begin(), it); 
+    
+}
+
+
+//Forward Search
+void FeatureForwardSearch(vector<vector<double>> &data){
     vector<int> currentFeatures;
     int featureToAdd; 
     double bestAccuracy = 0; 
@@ -54,11 +64,59 @@ void FeatureSearch(vector<vector<double>> &data){
 
         //push the new feature to currFeatures
         currentFeatures.push_back(featureToAdd); 
-        cout << "On level " << i << " I added feature " << featureToAdd << " to current set" << endl; 
+        cout << "On level " << i << " I added feature " << featureToAdd << " to current set for accuracy: " << bestAccuracy << endl; 
     }
 
     return; 
 }
+
+//Backwards search
+void FeatureBackwardSearch(vector<vector<double>> &data){
+    vector<int> currentFeatures;
+    //populate vector with all features
+    for(int i = 1; i < data.at(0).size(); ++i){
+        currentFeatures.push_back(i); 
+    }
+
+
+    int featureToRemove; 
+    double bestAccuracy = 0; 
+    double currAccuracy = 0; 
+    
+
+    //iterate through all the features(levels) 
+    for(int i = data.at(0).size() - 1; i >= 1; --i){
+        cout << "On " << i << "th level of the search tree" << endl; 
+        bestAccuracy = 0; 
+
+        //the additional features
+        for(int k = 1; k <= data.at(0).size() - 1; ++k){
+
+            //make sure feature exists in set
+            if(!isEmpty(currentFeatures, k)){
+
+                cout << "--Considering removing the " << k << "th feature" << endl;
+                currAccuracy = CrossValidation(); 
+
+                //check if currAccuracy is new max
+                if(currAccuracy > bestAccuracy){
+                    bestAccuracy = currAccuracy; 
+                    featureToRemove = k; 
+                }
+            }  
+        } 
+
+        //remove feature from currFeatures 
+        currentFeatures.erase(currentFeatures.begin() + GetIndex(currentFeatures, featureToRemove));  
+        cout << "On level " << i << " I removed feature " << featureToRemove << " to current set for accuracy: " << bestAccuracy << endl; 
+    }
+
+    return; 
+}
+
+
+
+
 
 int main() {
     srand(time(0)); 
@@ -88,10 +146,17 @@ int main() {
     //     cout << endl; 
     // }
 
-    FeatureSearch(smallData); 
+    // FeatureSearch(smallData); 
 
+    FeatureBackwardSearch(smallData); 
+    // vector<int> v = {1, 2, 3}; 
 
+    // cout << GetIndex(v, 3) << endl;
 
+    // v.erase(v.begin() + GetIndex(v,3)); 
+    // for(auto i: v){
+    //     cout << i << endl; 
+    // } 
         
     return 0;
 }
