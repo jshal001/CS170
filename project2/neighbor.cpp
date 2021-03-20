@@ -11,6 +11,10 @@
 #include <chrono>
 using namespace std;
 
+bool isEmpty(vector<int>&, int); 
+int GetIndex(vector<int>&, int); 
+
+//function to create a new vector for an instance excluding the class
 vector<double> CreateObject(vector<double> v){
     vector<double> temp; 
 
@@ -21,8 +25,7 @@ vector<double> CreateObject(vector<double> v){
     return temp; 
 }
 
-bool isEmpty(vector<int>&, int); 
-int GetIndex(vector<int>&, int); 
+
 
 //takes in two vectors and calculates the distance 
 double FindDistance(vector<double> v1, vector<double> v2){
@@ -118,7 +121,7 @@ int GetIndex(vector<int>& features, int val){
 
 
 //Forward Search
-void FeatureForwardSearch(vector<vector<double>> &data){
+void ForwardSelection(vector<vector<double>> &data){
     vector<int> currentFeatures = {}; 
     int featureToAdd; 
     double bestAccuracy = 0; 
@@ -169,7 +172,7 @@ void FeatureForwardSearch(vector<vector<double>> &data){
 }
 
 //Backwards search
-void FeatureBackwardSearch(vector<vector<double>> &data){
+void BackwardElimination(vector<vector<double>> &data){
     vector<int> currentFeatures;
     //populate vector with all features
     for(unsigned i = 1; i < data.at(0).size(); ++i){
@@ -274,10 +277,10 @@ int main() {
 
     auto start = chrono::steady_clock::now(); 
     if(userInput == 1){
-        FeatureForwardSearch(Data); 
+        ForwardSelection(Data); 
     }
     else{
-        FeatureBackwardSearch(Data); 
+        BackwardElimination(Data); 
     }
 
     auto end = chrono::steady_clock::now(); 
