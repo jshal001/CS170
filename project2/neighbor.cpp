@@ -26,7 +26,6 @@ vector<double> CreateObject(vector<double> v){
 }
 
 
-
 //takes in two vectors and calculates the distance 
 double FindDistance(vector<double> v1, vector<double> v2){
     double sum = 0; 
@@ -48,6 +47,7 @@ double FindDistance(vector<double> v1, vector<double> v2){
 double CrossValidation(vector<vector<double>> data, vector<int> currentSet, int newFeature, int choice){
     //first, make the change(whether that's delete or add)
     if(choice == 1 || choice == 2){
+        //if forwardselection, push new feature
         if(choice == 1){
             currentSet.push_back(newFeature);
         }
@@ -80,6 +80,7 @@ double CrossValidation(vector<vector<double>> data, vector<int> currentSet, int 
         for(unsigned k = 0; k < data.size(); ++k){
             if(k != i){
 
+                //create subset of current neighbor to calculate distance
                 vector<double> tempObject = CreateObject(data.at(k));
                 double distance = FindDistance(objectToClassify, tempObject);
                
@@ -183,6 +184,8 @@ void BackwardElimination(vector<vector<double>> &data){
     int featureToRemove; 
     double bestAccuracy = 0; 
     double currAccuracy = 0; 
+    
+    //the final answers
     vector<int> finalSet; 
     double finalAccuracy = 0; 
     
